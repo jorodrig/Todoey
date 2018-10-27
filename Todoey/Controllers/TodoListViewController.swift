@@ -12,23 +12,15 @@ class TodoListViewController: UITableViewController {
     //var itemArray = ["Find Me","Buy Eggs","Buy Milk"]
     var itemArray = [Item]()  //create instance of item class, here we use this instance as an array of Item objects by enclosing as [Items]
                              // this is our data model
-    
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print(dataFilePath)
         
-        let newItem = Item()
-        newItem.title = "Find Joseph"
-        itemArray.append(newItem)
-        
-        let newItem2 = Item()
-        newItem.title = "Buy Eggs"
-        itemArray.append(newItem)
-        
-        let newItem3 = Item()
-        newItem.title = "Buy Milk"
-        itemArray.append(newItem)
+
+        loadItems()
 
         // Do any additional setup after loading the view, typically from a nib.
 //        if let items = UserDefaults.standard.array(forKey: "ToDoListArray") as? [String]  {
@@ -54,10 +46,10 @@ class TodoListViewController: UITableViewController {
     //MARK - TableVIew Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done          //sets the Done property each tableview row to the opposite of what it currently is
-                                                                                //if true set to false, if false set to true.  Replaces conditional If/else statements
+        self.saveItems()                                                        //if true set to false, if false set to true.  Replaces conditional If/else statements
         tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
-        
+
 //        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{  //if a cell is selected put checkmakr
 //            tableView.cellForRow(at: indexPath)?.accessoryType = .none        //if already has a checkmark, remove it
 //
@@ -80,8 +72,20 @@ class TodoListViewController: UITableViewController {
             let newItem = Item()
             newItem.title = textField.text!
             self.itemArray.append(newItem)
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")  //is a dict key value 
-            self.tableView.reloadData()
+            self.saveItems()
+            //self.defaults.set(self.itemArray, forKey: "ToDoListArray")  //is a dict key value
+            
+//            let encoder = PropertyListEncoder()
+//            do {
+//
+//                let data = try encoder.encode(self.itemArray)
+//                try data.write(to: self.dataFilePath!)
+//            }catch{
+//                print("error encoding tiem array, \(error)")
+//
+//            }
+            
+            //self.tableView.reloadData()
             
         }
         
@@ -94,5 +98,34 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         present(alert,animated: true,completion: nil)
     }
+    
+    //MARK = Model Manipulation methods
+    func saveItems(){
+        
+        let encoder = PropertyListEncoder()
+        do {
+            
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        }catch{
+            print("error encoding tiem array, \(error)")
+            
+        }
+        self.tableView.reloadData()
+
+    }
+    func loadItems(){
+        
+        if let data = try? Data(contentsOf: dataFilePath!){
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            }catch {
+                print("Error decoding item array, \(error)")
+            }
+        }
+    }
+    
+    
 }
 

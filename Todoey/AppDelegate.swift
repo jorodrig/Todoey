@@ -16,8 +16,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)//test code to show the path to persistent data on simulator devices.
+        //print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)//test code to show the path to persistent data on simulator devices.
                     //Use this path to browse Finder to the plist for the app which shows the stored local data.  Put corresponding Call in an Action Method or whereever persistent data needs to be stored to NOT use UserDefaults as a database as it is loaded each time an app is loaded
+
+
         return true
     }
 
