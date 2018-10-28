@@ -22,7 +22,7 @@ class TodoListViewController: UITableViewController {
         print(dataFilePath)
         
 
-       // loadItems()
+        loadItems()
 
         // Do any additional setup after loading the view, typically from a nib.
 //        if let items = UserDefaults.standard.array(forKey: "ToDoListArray") as? [String]  {
@@ -46,8 +46,18 @@ class TodoListViewController: UITableViewController {
     }
     
     //MARK - TableVIew Delegate Methods
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+
+//        context.delete(itemArray[indexPath.row])                              //This is how to remove data from both database and itemArray
+//        itemArray.remove(at: indexPath.row)                                   //remove from itemArray.  MUST BE DONE <AFTER> contect.delete
+        
+        //The following line is test to update the data by updating the itemArray then commit with context.save()
+        //itemArray[indexPath.row].setValue("Completed", forKey: "title")         //This is one way to update data.
+        
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done          //sets the Done property each tableview row to the opposite of what it currently is
+        
+
         self.saveItems()                                                        //if true set to false, if false set to true.  Replaces conditional If/else statements
         tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
@@ -76,6 +86,8 @@ class TodoListViewController: UITableViewController {
             //In order to get access to AppDelegate's persistentContainer property or method, the following code is needed as a Singleton.
             let newItem = Item(context: self.context)                   //Remember Item here is a Coredata model class that has a Context
                                                                         //property which is now assigned to our appdelegate's context here
+                                                                        //IMPORTANT: Item is of type NSManagedObject which IS-A ROW in our Entity
+            //Entity here is the CoreData class, attributes are columns so NSManagedObject is a single row of data
             
             newItem.title = textField.text!
             newItem.done = false
@@ -113,7 +125,7 @@ class TodoListViewController: UITableViewController {
         
         //let encoder = PropertyListEncoder()
         do {
-            try context.save()
+            try context.save()      //Recall context is the temporary Staging area BEFORE the it is committed to the Database or datamodel.
                 
         }catch {
                 print("error saving context \(error)")
@@ -122,18 +134,18 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
 
     }
-//    func loadItems(){
-//
-//        if let data = try? Data(contentsOf: dataFilePath!){
-//            let decoder = PropertyListDecoder()
-//            do {
-//                itemArray = try decoder.decode([Item].self, from: data)
-//            }catch {
-//                print("Error decoding item array, \(error)")
-//            }
-//        }
-//    }
-//
+    //MARK - Read data from database model
+    func loadItems(){
+        let request : NSFetchRequest<Item> = Item.fetchRequest()  // This will fecth all items in the database into request var
+        do{
+            itemArray = try context.fetch(request)          //store the request data into exiting itemArray
+            
+        } catch {
+            print("error fecthing data from contect \(error)")
+        }
+
+    }
+
     
 }
 
