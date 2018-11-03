@@ -7,10 +7,14 @@
 //
 
 import UIKit
-import CoreData
+//import CoreData                       //uncomment for coredata implimentation
+import RealmSwift
 
 
 class CategoryViewController: UITableViewController {
+    
+    let realm = try! Realm()
+    
     //var itemArray = ["Find Me","Buy Eggs","Buy Milk"]
     var categoryArray = [Category]()  //create instance of item class, here we use this instance as an array of Item objects by enclosing as [Items]
     // this is our data model
@@ -56,12 +60,13 @@ class CategoryViewController: UITableViewController {
 
         
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in            //START CLOSURE
-            let newCategory = Category(context: self.context)                   //Remember Item here is a Coredata model class that has a Context
+        let newCategory = Category()                            //Realm Version
+            //            let newCategory = Category(context: self.context)  //CoreData version: Remember Item here is a Coredata model class that has a Context
             
             newCategory.name = textField.text!
             
             self.categoryArray.append(newCategory)
-            self.saveCategories()
+            self.saveCategories(category: newCategory)
             
         }   //end closure
         
@@ -77,11 +82,14 @@ class CategoryViewController: UITableViewController {
         
     }
     //MARK = Model Manipulation methods
-    func saveCategories(){
+    func saveCategories(category : Category){
         
         //let encoder = PropertyListEncoder()
         do {
-            try context.save()      //Recall context is the temporary Staging area BEFORE the it is committed to the Database or datamodel.
+            try realm.write {
+                realm.add(category)
+            }
+//            try context.save()      //Recall context is the temporary Staging area BEFORE the it is committed to the Database or datamodel.
             
         }catch {
             print("error saving context \(error)")
@@ -93,16 +101,16 @@ class CategoryViewController: UITableViewController {
     //MARK - Read data from database model
     //NOTE: loadCategories method syntax.  The 'with request' is a default param of type NSFetchRequest that returns an array from db Category
     func loadCategories(){   // = Category.fetchRequest() is default value to load everything from DB initilly
-        let  request: NSFetchRequest<Category> = Category.fetchRequest() //var called request of type NSFetchRequest
-        
-        do{
-            categoryArray = try context.fetch(request)          //store the request data into exiting categoryArray
-            
-        } catch {
-            print("error fecthing data from contect \(error)")
-        }
-        
-        tableView.reloadData()
+//        let  request: NSFetchRequest<Category> = Category.fetchRequest() //var called request of type NSFetchRequest
+//
+//        do{
+//            categoryArray = try context.fetch(request)          //store the request data into exiting categoryArray
+//
+//        } catch {
+//            print("error fecthing data from contect \(error)")
+//        }
+//
+//        tableView.reloadData()
         
     }
     
@@ -110,7 +118,7 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
         
-        self.saveCategories()
+        //self.saveCategories()
         tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -127,27 +135,27 @@ class CategoryViewController: UITableViewController {
 }
 //MARK - END CATEGORYVIEWCONTROLLER CLASS  and BEGIN CATEGORYVIEWCONTROLLER EXTENSION
 
-extension CategoryViewController : UISearchBarDelegate {
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        
-        let request : NSFetchRequest<Category> = Category.fetchRequest()
-        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchBar.text!)
-        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
-        //loadCategories(with: request)                //call with param
-        loadCategories()                //call with param
+//extension CategoryViewController : UISearchBarDelegate {
+//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+//
+//        let request : NSFetchRequest<Category> = Category.fetchRequest()
+//        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchBar.text!)
+//        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+//        //loadCategories(with: request)                //call with param
+//        loadCategories()                //call with param
+//
+//    }
 
-    }
-    
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        if searchBar.text?.count == 0 {         //count the number of chars entered by user, if none load all item in DB
-            loadCategories()                         //load all item if user does nothing in searchbar
-            DispatchQueue.main.async {          //causes the searchbar to run in foreground queue then dismisses in not used or user clears
-                searchBar.resignFirstResponder()    //stops the searchbar from being the current feature being used by used
-                //so releases the searchbar and hides the KB is it is open
-            }
-        }
-        
-    }
+//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+//        if searchBar.text?.count == 0 {         //count the number of chars entered by user, if none load all item in DB
+//            loadCategories()                         //load all item if user does nothing in searchbar
+//            DispatchQueue.main.async {          //causes the searchbar to run in foreground queue then dismisses in not used or user clears
+//                searchBar.resignFirstResponder()    //stops the searchbar from being the current feature being used by used
+//                //so releases the searchbar and hides the KB is it is open
+//            }
+//        }
+//        
+//    }
     
     
-}
+

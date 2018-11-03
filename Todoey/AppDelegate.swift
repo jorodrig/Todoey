@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -18,8 +19,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         //print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)//test code to show the path to persistent data on simulator devices.
-                    //Use this path to browse Finder to the plist for the app which shows the stored local data.  Put corresponding Call in an Action Method or whereever persistent data needs to be stored to NOT use UserDefaults as a database as it is loaded each time an app is loaded
-
+        //Use this path to browse Finder to the plist for the app which shows the stored local data.  Put corresponding Call in an Action Method or whereever persistent data needs to be stored to NOT use UserDefaults as a database as it is loaded each time an app is loaded
+        //***START REALM modification: Here Realm database is being used as an alternative to CoreData or SQLite
+        
+        print(Realm.Configuration.defaultConfiguration.fileURL)  //path to the Realm Data base open using Realm Browser App
+        let data = Data()
+        
+        do{
+            let realm = try Realm()
+            
+            //realm.add(data)
+            
+        }catch {
+                print("Error initializing new realm object, \(error)")
+            }
+        //***END REALM modification
 
         return true
     }
