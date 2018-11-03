@@ -13,16 +13,21 @@ class TodoListViewController: UITableViewController {
     //var itemArray = ["Find Me","Buy Eggs","Buy Milk"]
     var itemArray = [Item]()  //create instance of item class, here we use this instance as an array of Item objects by enclosing as [Items]
                              // this is our data model
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
-    let defaults = UserDefaults.standard
+    var selectedCategory : Category? {  //Category is an optional datatype as it may not always have a value so initially can be nil
+        didSet{         //didSet is a special feature that specifies when a var is set with a NEW value.  So everything between the Category? curly braces will only get set as SOON as selectedCategory gets sets in the prepare for seque method in the destination view controller which this time is CategoryViewController
+            loadItems()
+        }
+    }
+    //let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    //let defaults = UserDefaults.standard
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        print(dataFilePath)
+        //print(dataFilePath)
         
 
-        loadItems()
+        //loadItems()          s//since no arg provided, will run with default param.  ALSO note: since we want to load items only after a category has been selected, we no longer need to call it here
 
         // Do any additional setup after loading the view, typically from a nib.
 //        if let items = UserDefaults.standard.array(forKey: "ToDoListArray") as? [String]  {
@@ -91,8 +96,9 @@ class TodoListViewController: UITableViewController {
             
             newItem.title = textField.text!
             newItem.done = false
-            
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
+            
             self.saveItems()
             //self.defaults.set(self.itemArray, forKey: "ToDoListArray")  //is a dict key value
             
@@ -135,17 +141,63 @@ class TodoListViewController: UITableViewController {
 
     }
     //MARK - Read data from database model
-    func loadItems(){
-        let request : NSFetchRequest<Item> = Item.fetchRequest()  // This will fecth all items in the database into request var
+    //NOTE: loadItems method syntax.  The 'with request' is a default param of type NSFetchRequest that returns an array from db Item
+    //IMPORTANT NOTE: PREDICATE - predicates here is part of the SQL query on the DB that will only return results based on the predicate String that matches the criteria.  In this case, we want only the items that match the category in the DB.  Since we created a relationship between the two tables Items and Category. When we query the DB with multiple predicates or WHERE CLAUSE conditions, there is the risk only the last query will be retured on the DB results. So compund predicates or WHERE cluses will be needed since we want both Categories and their matching ITems, we actually query both tables that match the relationship.
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil){
+        // = Item.fetchRequest() is default value to load everything from DB initilly
+        //let request : NSFetchRequest<Item> = Item.fetchRequest()  // This will fecth all items in the database into request var
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        //if let is optional binding to make sure we are not unwrapping a Nil value
+        
+        if let additionalPredicate =  predicate{ //is Not Nil
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])            // additionalPridicate is unwrapped predicate that has been passed in if not nil
+        }else{
+            request.predicate = categoryPredicate           //if predicate passed in is NIL then just keep the selected category i.e. show the categories without items.
+        }
+        
+        //request.predicate = compoundPredicate
+        
         do{
             itemArray = try context.fetch(request)          //store the request data into exiting itemArray
             
         } catch {
             print("error fecthing data from contect \(error)")
         }
+        
+        tableView.reloadData()
 
     }
+    
+    
+    
+}
+    //MARK - END VIEWCONTROLLER CLASS  and BEGIN VIEWCONTROLLER EXTENSION
 
+extension TodoListViewController : UISearchBarDelegate {
+    // Happens when we press the Searchbar button or enter Key.  This creates a DB request on the Item DB that matches the predicate i.e. where condition clause for title, then we sort ascending and reload the sorted items.
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        let request : NSFetchRequest<Item> = Item.fetchRequest()  //fetch all data from Item DB
+        
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)  // setup query string for only the item the user is searching for.
+        
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request, predicate: predicate)                //query items for only the Searched Item.
+
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {         //count the number of chars entered by user, if none load all item in DB
+            loadItems()                         //load all item if user does nothing in searchbar
+            DispatchQueue.main.async {          //causes the searchbar to run in foreground queue then dismisses in not used or user clears
+            searchBar.resignFirstResponder()    //stops the searchbar from being the current feature being used by used
+                                                //so releases the searchbar and hides the KB is it is open
+            }
+        }
+        
+    }
+    
     
 }
 
