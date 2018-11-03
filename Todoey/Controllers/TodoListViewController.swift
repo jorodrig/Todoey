@@ -140,7 +140,7 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
 
     }
-    //MARK - Read data from database model
+    //MARK - Read data from database model - COREDATA VERSION
     //NOTE: loadItems method syntax.  The 'with request' is a default param of type NSFetchRequest that returns an array from db Item
     //IMPORTANT NOTE: PREDICATE - predicates here is part of the SQL query on the DB that will only return results based on the predicate String that matches the criteria.  In this case, we want only the items that match the category in the DB.  Since we created a relationship between the two tables Items and Category. When we query the DB with multiple predicates or WHERE CLAUSE conditions, there is the risk only the last query will be retured on the DB results. So compund predicates or WHERE cluses will be needed since we want both Categories and their matching ITems, we actually query both tables that match the relationship.
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil){

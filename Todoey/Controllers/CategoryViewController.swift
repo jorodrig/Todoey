@@ -27,7 +27,7 @@ class CategoryViewController: UITableViewController {
     }
     
     
-    //MARK: - TableView Data Source Methods
+    //MARK: - TableView Data Source Methods  - CoreData Version
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categoryArray.count
     }
